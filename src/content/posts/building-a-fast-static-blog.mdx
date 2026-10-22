@@ -1,0 +1,51 @@
+---
+title: "Building a fast static blog"
+date: 2026-09-14
+summary: "The performance budget, build-time checks, and tradeoffs behind a blog that stays quick as it grows."
+tags: ["astro", "performance", "web-dev"]
+---
+
+A personal blog does not need a server. It needs a build that produces good HTML, a CDN that serves it, and a budget that stops the page from quietly getting heavier.
+
+This site uses Astro to generate static pages. The important part is not the framework; it is the constraints around it.
+
+## Start with a budget
+
+Performance work fails when it is a cleanup task at the end. I set the budget before writing the first component:
+
+- 95 or higher for Lighthouse mobile performance.
+- Largest Contentful Paint at 2.0 seconds or less on a throttled connection.
+- Less than 150 KB of initial JavaScript, gzip-compressed.
+- No render-blocking third-party scripts.
+
+The JavaScript number is the one that needs defending. It is easy to add a small library for search, another for code highlighting, and a third for analytics. Each one looks reasonable alone. Together they turn a reading page into an application boot sequence.
+
+Static HTML, one small theme script, and a search index fetched only on the search page keep the initial payload small.
+
+## Let the build do the repetitive work
+
+A static site is a chance to move checks from runtime to build time. The content pipeline validates frontmatter with a schema, checks for duplicate slugs, and scans internal links before deployment.
+
+```ts
+const required = ["title", "date", "summary"] as const;
+
+for (const field of required) {
+  if (!(field in data)) {
+    throw new Error(`${file}: missing required field "${field}"`);
+  }
+}
+```
+
+If the build fails, the previous deployment stays live. That is a much better failure mode than shipping a page with a broken link and finding out from a reader.
+
+## Measure the reading path
+
+The home page, a post, and a tag page are the paths that matter. I test those three on a mid-range phone profile, not just on a fast desktop. Images get explicit dimensions, the cover is optimized at build time, and the layout reserves space so text does not jump when assets arrive.
+
+A small page is not automatically a fast page. Fonts, cookie banners, and late-loading images can ruin the experience even when the JavaScript bundle is tiny. The budget has to include the whole reading path.
+
+## Keep the complexity boring
+
+There is no database, no authentication, and no runtime API. Publishing is a commit. Rolling back is redeploying an earlier commit. The content is portable because it is just text.
+
+That simplicity is the feature. It leaves more room for the part that actually matters: writing something worth reading.

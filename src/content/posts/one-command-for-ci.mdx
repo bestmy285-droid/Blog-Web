@@ -1,0 +1,36 @@
+---
+title: "One command for CI"
+date: 2026-04-22
+summary: "Why a single documented check command is better than a list of steps everyone forgets."
+tags: ["astro", "web-dev"]
+---
+
+A CI pipeline should have one obvious entry point. If contributors have to remember five commands in the right order, the pipeline will drift from local development.
+
+## Put the checks behind one script
+
+The command can be `npm test`, `make check`, or anything else. What matters is that it runs the same validation locally and in CI.
+
+```json
+{
+  "scripts": {
+    "validate": "node scripts/validate-content.mjs",
+    "check": "astro check",
+    "test": "npm run validate && npm run check"
+  }
+}
+```
+
+CI then calls `npm test` and `npm run build`. A contributor runs the same commands before opening a pull request.
+
+## Make failures specific
+
+A check that says "content invalid" is not useful. A check that names the file, the field, and the expected range can be fixed without reading the validator source.
+
+## Keep the build separate
+
+Validation is fast and should fail early. The production build is slower and belongs after validation. A failed check should never upload an artifact or trigger a deployment.
+
+## Document the command
+
+The README should show the command near the top, not buried under a deployment section. If the command is hard to find, it will not be run.

@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page not found"
+  description="The page you requested does not exist. Browse the archive or search the blog."
+  canonicalPath="/404/"
+  noindex
+>
+  <section class="not-found wrap">
+    <p class="not-found-code">404</p>
+    <h1>That page is not here.</h1>
+    <p>
+      The link may be old, the post may have moved, or the URL may have a typo. Try one of these
+      instead.
+    </p>
+    <div class="not-found-links">
+      <a class="button" href="/">Home</a>
+      <a class="button button-secondary" href="/archive/">Archive</a>
+      <a class="button button-secondary" href="/search/">Search</a>
+    </div>
+  </section>
+</BaseLayout>

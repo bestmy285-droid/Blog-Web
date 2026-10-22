@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import Pagination from '../../components/Pagination.astro';
+import { SITE_DESCRIPTION } from '../../consts';
+import { getPostsForDisplay, type Post } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const pageSize = 10;
+  const posts = await getPostsForDisplay();
+  const totalPages = Math.ceil(posts.length / pageSize);
+
+  return Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) => {
+    const page = index + 2;
+    return {
+      params: { page: String(page) },
+      props: {
+        page,
+        totalPages,
+        posts: posts.slice((page - 1) * pageSize, page * pageSize),
+      },
+    };
+  });
+}
+
+interface Props {
+  page: number;
+  totalPages: number;
+  posts: Post[];
+}
+
+const { page, totalPages, posts } = Astro.props;
+---
+
+<BaseLayout
+  title={`Page ${page}`}
+  description={`Page ${page} of ${totalPages} — ${SITE_DESCRIPTION}`}
+  canonicalPath={`/page/${page}/`}
+>
+  <section class="page-header wrap">
+    <h1>Page {page}</h1>
+    <p>Older posts, newest first. You are on page {page} of {totalPages}.</p>
+  </section>
+
+  <section class="wrap" aria-label={`Posts on page ${page}`}>
+    <div class="post-list">
+      {posts.map((post) => <PostCard post={post} />)}
+    </div>
+    <Pagination page={page} totalPages={totalPages} />
+  </section>
+</BaseLayout>

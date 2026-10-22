@@ -1,0 +1,19 @@
+---
+import { AUTHOR_EMAIL, AUTHOR_NAME, SITE_TITLE } from '../consts';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>© {year} {AUTHOR_NAME}. Built with Astro.</p>
+    <div class="footer-links">
+      <a href="/rss.xml">RSS</a>
+      <a href="/sitemap.xml">Sitemap</a>
+      <a href={`mailto:${AUTHOR_EMAIL}`}>Email</a>
+    </div>
+  </div>
+  <p class="wrap footer-note">
+    {SITE_TITLE} is a static site. No trackers, no cookies, no noise.
+  </p>
+</footer>

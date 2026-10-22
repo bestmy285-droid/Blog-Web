@@ -1,0 +1,42 @@
+---
+import type { Post } from '../lib/posts';
+import { formatDate, getReadingTime, postUrl } from '../lib/posts';
+import { getTagList, tagUrl } from '../lib/tags';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const tags = getTagList(post.data.tags);
+---
+
+<article class:list={['post-card', { 'is-draft': post.data.draft }]}>
+  <div class="post-card-top">
+    <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+    {post.data.draft && <span class="draft-badge">Draft</span>}
+  </div>
+
+  <h2 class="post-card-title">
+    <a href={postUrl(post)}>{post.data.title}</a>
+  </h2>
+
+  <p class="post-card-summary">{post.data.summary}</p>
+
+  <div class="post-card-footer">
+    <span class="reading-time">{getReadingTime(post)} min read</span>
+    {
+      tags.length > 0 && (
+        <ul class="tag-list" aria-label="Tags">
+          {tags.map((tag) => (
+            <li>
+              <a class="tag" href={tagUrl(tag)}>
+                {tag}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</article>

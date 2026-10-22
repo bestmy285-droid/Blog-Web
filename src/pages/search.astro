@@ -1,0 +1,285 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Search"
+  description="Search every published post by title, tag, summary, or body text."
+  canonicalPath="/search/"
+  noindex
+>
+  <section class="page-header wrap">
+    <h1>Search</h1>
+    <p>Search titles, tags, summaries, and full post text. Everything runs in your browser.</p>
+  </section>
+
+  <section class="wrap">
+    <form class="search-form" role="search" data-search-form>
+      <label class="search-label" for="search-input">Search posts</label>
+      <input
+        class="search-input"
+        id="search-input"
+        name="q"
+        type="search"
+        placeholder="Try “typescript”, “css”, or “performance”"
+        autocomplete="off"
+        spellcheck="false"
+        data-search-input
+      />
+      <button class="button search-button" type="submit">Search</button>
+    </form>
+
+    <p class="search-status" data-search-status aria-live="polite"></p>
+    <ul class="search-results" data-search-results></ul>
+
+    <div class="search-suggestions" data-search-suggestions hidden>
+      <span>Try a tag:</span>
+      <span data-search-tags></span>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  interface SearchItem {
+    title: string;
+    url: string;
+    date: string;
+    summary: string;
+    tags: string[];
+    body: string;
+  }
+
+  interface SearchResult extends SearchItem {
+    score: number;
+    excerpt: string;
+  }
+
+  const form = document.querySelector<HTMLFormElement>('[data-search-form]');
+  const input = document.querySelector<HTMLInputElement>('[data-search-input]');
+  const status = document.querySelector<HTMLElement>('[data-search-status]');
+  const resultsList = document.querySelector<HTMLUListElement>('[data-search-results]');
+  const suggestions = document.querySelector<HTMLElement>('[data-search-suggestions]');
+  const tagContainer = document.querySelector<HTMLElement>('[data-search-tags]');
+
+  const normalize = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+  const formatDate = (iso: string) =>
+    new Intl.DateTimeFormat('en', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(iso));
+
+  let index: SearchItem[] = [];
+  let activeIndex = -1;
+
+  const getResults = (query: string): SearchResult[] => {
+    const needle = normalize(query.trim());
+
+    if (!needle) {
+      return index.slice(0, 6).map((item) => ({ ...item, score: 0, excerpt: item.summary }));
+    }
+
+    return index
+      .map((item) => {
+        const title = normalize(item.title);
+        const tags = normalize(item.tags.join(' '));
+        const summary = normalize(item.summary);
+        const body = normalize(item.body);
+        const haystack = `${title} ${tags} ${summary} ${body}`;
+
+        if (!haystack.includes(needle)) {
+          return null;
+        }
+
+        const score =
+          (title.includes(needle) ? 8 : 0) +
+          (tags.includes(needle) ? 4 : 0) +
+          (summary.includes(needle) ? 2 : 0) +
+          (body.includes(needle) ? 1 : 0);
+
+        return {
+          ...item,
+          score,
+          excerpt: makeExcerpt(item.body || item.summary, needle),
+        };
+      })
+      .filter((item): item is SearchResult => Boolean(item))
+      .sort((a, b) => b.score - a.score || new Date(b.date).valueOf() - new Date(a.date).valueOf());
+  };
+
+  const makeExcerpt = (text: string, needle: string) => {
+    const normalized = normalize(text);
+    const position = normalized.indexOf(needle);
+
+    if (position === -1) {
+      return text.slice(0, 180);
+    }
+
+    const start = Math.max(0, position - 70);
+    const end = Math.min(text.length, position + needle.length + 140);
+    return `${start > 0 ? '… ' : ''}${text.slice(start, end).trim()}${end < text.length ? ' …' : ''}`;
+  };
+
+  const setStatus = (message: string) => {
+    if (status) status.textContent = message;
+  };
+
+  const clearResults = () => {
+    if (resultsList) resultsList.textContent = '';
+    activeIndex = -1;
+  };
+
+  const highlight = () => {
+    if (!resultsList) return;
+    const links = Array.from(resultsList.querySelectorAll<HTMLAnchorElement>('a'));
+
+    links.forEach((link, position) => {
+      const wrapper = link.closest<HTMLElement>('.search-result');
+      wrapper?.classList.toggle('is-active', position === activeIndex);
+    });
+
+    if (activeIndex >= 0) {
+      links[activeIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+  };
+
+  const render = (query: string) => {
+    const trimmed = query.trim();
+    const results = getResults(trimmed);
+
+    clearResults();
+    if (!resultsList) return;
+
+    if (results.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'search-empty';
+      empty.textContent = `No posts match “${trimmed}”. Try a shorter word or a tag below.`;
+      resultsList.append(empty);
+      setStatus('No results.');
+      if (suggestions) suggestions.hidden = false;
+      return;
+    }
+
+    if (suggestions) suggestions.hidden = Boolean(trimmed);
+
+    for (const item of results) {
+      const listItem = document.createElement('li');
+      listItem.className = 'search-result';
+
+      const heading = document.createElement('h2');
+      const link = document.createElement('a');
+      link.href = item.url;
+      link.textContent = item.title;
+      heading.append(link);
+
+      const date = document.createElement('p');
+      date.className = 'search-date';
+      date.textContent = formatDate(item.date);
+
+      const snippet = document.createElement('p');
+      snippet.className = 'search-snippet';
+      snippet.textContent = item.excerpt;
+
+      listItem.append(heading, date, snippet);
+      resultsList.append(listItem);
+    }
+
+    setStatus(
+      trimmed
+        ? `${results.length} ${results.length === 1 ? 'result' : 'results'} for “${trimmed}”.`
+        : 'Showing the latest posts. Type to search.',
+    );
+  };
+
+  const updateUrl = (query: string) => {
+    const next = query.trim()
+      ? `/search/?q=${encodeURIComponent(query.trim())}`
+      : '/search/';
+    history.replaceState(null, '', next);
+  };
+
+  const run = (query: string, pushUrl: boolean) => {
+    render(query);
+    if (pushUrl) updateUrl(query);
+  };
+
+  const renderTagSuggestions = () => {
+    if (!tagContainer) return;
+
+    const counts = new Map<string, number>();
+    for (const item of index) {
+      for (const tag of item.tags) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      }
+    }
+
+    const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8);
+
+    for (const [tag] of sorted) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = tag;
+      button.addEventListener('click', () => {
+        if (input) input.value = tag;
+        run(tag, true);
+        input?.focus();
+      });
+      tagContainer.append(button, document.createTextNode(' '));
+    }
+  };
+
+  fetch('/search-index.json')
+    .then((response) => {
+      if (!response.ok) throw new Error(`Search index returned ${response.status}`);
+      return response.json() as Promise<SearchItem[]>;
+    })
+    .then((items) => {
+      index = items;
+      renderTagSuggestions();
+
+      const initial = new URLSearchParams(window.location.search).get('q') ?? '';
+      if (input) input.value = initial;
+      render(initial);
+    })
+    .catch(() => {
+      setStatus('Search is unavailable right now. You can still browse the archive.');
+    });
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (input) run(input.value, true);
+  });
+
+  input?.addEventListener('input', () => {
+    run(input.value, true);
+  });
+
+  input?.addEventListener('keydown', (event) => {
+    if (!resultsList) return;
+    const links = Array.from(resultsList.querySelectorAll<HTMLAnchorElement>('a'));
+    if (links.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, links.length - 1);
+      highlight();
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      highlight();
+    } else if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      links[activeIndex]?.click();
+    } else if (event.key === 'Escape') {
+      if (input) input.value = '';
+      activeIndex = -1;
+      run('', true);
+    }
+  });
+</script>

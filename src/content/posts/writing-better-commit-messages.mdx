@@ -1,0 +1,34 @@
+---
+title: "Writing better commit messages"
+date: 2026-03-15
+summary: "A commit message is a note to the next person, and that person is usually future you."
+tags: ["writing", "meta"]
+---
+
+A commit message is not a label for a diff. It is a short explanation of why the diff exists. The code shows what changed; the message explains the intent.
+
+## Start with the verb
+
+A useful subject line completes the sentence "This commit will…". Use the imperative mood: "Add RSS feed", "Fix draft filtering", "Remove unused script".
+
+Keep it under about 70 characters and avoid a trailing period. The subject should be readable in a log without opening the commit.
+
+## Explain the why in the body
+
+The body is where the context goes. What was wrong? Why this approach? What tradeoff did you accept? A few sentences are enough.
+
+```text
+Fix draft leakage in search
+
+The search index was built from every content entry, including
+drafts. Filter the collection before serializing the index and
+add a build-time check so the regression cannot ship.
+```
+
+## One idea per commit
+
+A commit that fixes a bug and reformats a file is hard to review and harder to revert. Split it. The history becomes a sequence of decisions instead of a pile of changes.
+
+## Link the context
+
+If there is an issue, a design note, or a related pull request, link it. The link is cheap now and valuable when the code is six months old.

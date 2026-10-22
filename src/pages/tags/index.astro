@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPostsForDisplay } from '../../lib/posts';
+import { getTagCounts, tagUrl } from '../../lib/tags';
+
+const posts = await getPostsForDisplay();
+const tags = getTagCounts(posts);
+---
+
+<BaseLayout
+  title="Tags"
+  description="Browse every topic covered on Blog Web."
+  canonicalPath="/tags/"
+>
+  <section class="page-header wrap">
+    <h1>Tags</h1>
+    <p>Every topic used by a published post. Counts show how many posts use the tag.</p>
+  </section>
+
+  <section class="wrap">
+    {
+      tags.size > 0 ? (
+        <ul class="tag-cloud" aria-label="All tags">
+          {[...tags.entries()].map(([tag, count]) => (
+            <li>
+              <a href={tagUrl(tag)}>
+                {tag}
+                <span class="count">{count}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="empty-state">
+          <p>No tags yet. Add tags to a post’s frontmatter to see them here.</p>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

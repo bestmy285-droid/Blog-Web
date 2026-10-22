@@ -1,0 +1,81 @@
+---
+title: "TypeScript patterns I reach for"
+date: 2026-08-30
+summary: "A few small TypeScript habits that make data shapes explicit and refactors less frightening."
+tags: ["typescript", "web-dev"]
+---
+
+Most TypeScript advice is really advice about design. The compiler is useful because it forces me to name the shapes I am passing around. These are the patterns I use most often.
+
+## Make invalid states hard to represent
+
+A boolean plus an optional value usually means the two can drift apart. A discriminated union keeps the value attached to the state that owns it.
+
+```ts
+type RequestState<T> =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; message: string };
+
+function render(state: RequestState<string>) {
+  switch (state.status) {
+    case "success":
+      return state.data;
+    case "error":
+      return state.message;
+    default:
+      return "…";
+  }
+}
+```
+
+The `success` branch cannot exist without `data`, and the `error` branch cannot exist without a message. There is no combination to remember.
+
+## Prefer narrow helpers over wide options
+
+A function with eight optional flags is hard to call and harder to change. Small helpers with one job are easier to test and read.
+
+```ts
+const isPublished = (post: { draft?: boolean }) => post.draft !== true;
+
+const published = posts.filter(isPublished);
+```
+
+This is not clever, and that is the point. The name explains the rule, and the implementation has one place to change when the rule changes.
+
+## Use `satisfies` when you want checking without widening
+
+An explicit annotation can erase the literal information the compiler already knows. `satisfies` checks the shape while keeping the narrow type.
+
+```ts
+const routes = {
+  home: "/",
+  archive: "/archive/",
+  about: "/about/",
+} satisfies Record<string, `/${string}`>;
+
+type RouteName = keyof typeof routes;
+```
+
+Now `routes.home` is still the literal `"/"`, and a typo in the key or value is caught at the declaration.
+
+## Keep runtime validation at the boundary
+
+Types disappear at runtime. Anything that crosses a boundary — frontmatter, an API response, a URL parameter — needs a runtime check. I use a schema at that boundary and plain TypeScript inside.
+
+```ts
+const result = postSchema.safeParse(raw);
+
+if (!result.success) {
+  throw new Error(result.error.message);
+}
+
+const post = result.data;
+```
+
+After that line, the rest of the code can trust the shape. The boundary is explicit, and the error is close to the file that caused it.
+
+## The compiler is a reviewer
+
+None of these patterns prevent every bug. They do make the common ones louder: a missing case, a field that only exists in one state, a value that was widened too early. That is enough. I would rather spend a minute naming a type than an afternoon tracing a shape through five files.

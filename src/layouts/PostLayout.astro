@@ -1,0 +1,208 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from './BaseLayout.astro';
+import ShareActions from '../components/ShareActions.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import { AUTHOR_NAME, SITE_URL } from '../consts';
+import { formatDate, getReadingTime, postUrl, type Post } from '../lib/posts';
+import { getTagList, tagUrl } from '../lib/tags';
+
+interface Props {
+  post: Post;
+  headings: { depth: number; slug: string; text: string }[];
+  related: Post[];
+}
+
+const { post, headings, related } = Astro.props;
+const tags = getTagList(post.data.tags);
+const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+const canonical = new URL(postUrl(post), Astro.site ?? new URL(SITE_URL)).href;
+const cover = post.data.cover;
+const image = cover?.src ?? '/og-default.png';
+const published = post.data.date;
+const modified = post.data.updated ?? published;
+const readingTime = getReadingTime(post);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.summary,
+  datePublished: published.toISOString(),
+  dateModified: modified.toISOString(),
+  author: {
+    '@type': 'Person',
+    name: AUTHOR_NAME,
+  },
+  image: [new URL(image, Astro.site ?? new URL(SITE_URL)).href],
+  mainEntityOfPage: canonical,
+  keywords: tags.join(', '),
+};
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.summary}
+  canonicalPath={postUrl(post)}
+  image={image}
+  imageAlt={cover ? post.data.coverAlt : 'Blog Web — notes on building for the web'}
+  type="article"
+  publishedTime={published}
+  modifiedTime={modified}
+  tags={tags}
+  jsonLd={jsonLd}
+>
+  <article class="post">
+    <header class="post-header wrap">
+      <p class="post-kicker">
+        <a href="/">Home</a>
+        <span aria-hidden="true">/</span>
+        <time datetime={published.toISOString()}>{formatDate(published)}</time>
+        {post.data.draft && <span class="draft-badge">Draft</span>}
+      </p>
+
+      <h1>{post.data.title}</h1>
+      <p class="post-lede">{post.data.summary}</p>
+
+      <div class="post-meta">
+        <span>{readingTime} min read</span>
+        {
+          tags.length > 0 && (
+            <ul class="tag-list" aria-label="Tags">
+              {tags.map((tag) => (
+                <li>
+                  <a class="tag" href={tagUrl(tag)}>
+                    {tag}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+
+      {
+        cover && (
+          <figure class="post-cover">
+            <Image
+              src={cover}
+              alt={post.data.coverAlt ?? ''}
+              widths={[640, 960, 1200]}
+              sizes="(max-width: 900px) 100vw, 900px"
+              loading="eager"
+            />
+          </figure>
+        )
+      }
+    </header>
+
+    <div class:list={['wrap', 'post-layout', { 'has-toc': toc.length >= 2 }]}>
+      <div class="post-content prose">
+        <slot />
+      </div>
+
+      {
+        toc.length >= 2 && (
+          <aside class="toc-column">
+            <TableOfContents headings={toc} />
+          </aside>
+        )
+      }
+    </div>
+
+    <footer class="post-footer wrap">
+      <ShareActions url={canonical} title={post.data.title} />
+
+      {
+        related.length > 0 && (
+          <section class="related" aria-labelledby="related-heading">
+            <h2 id="related-heading">Related posts</h2>
+            <ul class="related-list">
+              {related.map((entry) => (
+                <li>
+                  <a href={postUrl(entry)}>{entry.data.title}</a>
+                  <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </footer>
+  </article>
+
+  <script>
+    const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+    const tocHeadings = tocLinks
+      .map((link) => document.getElementById(link.dataset.tocLink ?? ''))
+      .filter((heading): heading is HTMLElement => Boolean(heading));
+
+    if (tocHeadings.length > 0) {
+      const setActive = (id: string) => {
+        for (const link of tocLinks) {
+          link.classList.toggle('is-active', link.dataset.tocLink === id);
+        }
+      };
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+          if (visible[0]) {
+            setActive(visible[0].target.id);
+          }
+        },
+        { rootMargin: '-10% 0px -75% 0px', threshold: 0 },
+      );
+
+      for (const heading of tocHeadings) {
+        observer.observe(heading);
+      }
+    }
+
+    for (const pre of document.querySelectorAll<HTMLElement>('.prose pre')) {
+      const code = pre.querySelector('code');
+      if (!code) continue;
+
+      pre.classList.add('has-copy-button');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-code';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      pre.append(button);
+
+      button.addEventListener('click', async () => {
+        const text = code.innerText;
+
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = 'Copied';
+          window.setTimeout(() => {
+            button.textContent = 'Copy';
+          }, 2000);
+        } catch {
+          const field = document.createElement('textarea');
+          field.value = text;
+          field.setAttribute('readonly', '');
+          field.style.position = 'fixed';
+          field.style.opacity = '0';
+          document.body.appendChild(field);
+          field.select();
+          const copied = document.execCommand('copy');
+          field.remove();
+
+          button.textContent = copied ? 'Copied' : 'Press Ctrl+C';
+
+          if (copied) {
+            window.setTimeout(() => {
+              button.textContent = 'Copy';
+            }, 2000);
+          }
+        }
+      });
+    }
+  </script>
+</BaseLayout>

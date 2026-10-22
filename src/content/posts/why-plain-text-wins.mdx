@@ -1,0 +1,46 @@
+---
+title: "Why plain text wins"
+date: 2026-06-30
+summary: "Markdown, Git, and a folder of files are still the most durable publishing stack I know."
+tags: ["writing", "meta"]
+---
+
+The most durable format for writing is still plain text. It opens on every machine, diffs cleanly, survives every editor, and does not need an export button. A blog built on Markdown is a blog that can outlive the tool that built it.
+
+## The file is the source of truth
+
+A post is a file with a small metadata block and a body. There is no database row, no proprietary block format, and no hidden revision history owned by a platform.
+
+```md
+---
+title: "A post"
+date: 2026-06-30
+tags: ["writing"]
+---
+
+The body starts here.
+```
+
+If the site generator disappears tomorrow, the content is still readable. If the design changes, the content does not move. If I want to publish somewhere else, I copy a directory.
+
+## Git is an editorial tool
+
+Version control is usually described as a programming tool. For writing, it is also an editorial one. Every change has a timestamp and a reason. I can compare two drafts, restore a deleted paragraph, or see when an idea first appeared.
+
+A commit is a small, honest unit of work: one post, one fix, one clarification. That is a better publishing history than a list of “saved” timestamps with no context.
+
+## Constraints improve the writing
+
+A plain file has no sidebar of related posts, no engagement metrics, and no recommendation engine. It has a title and a body. That constraint is useful. It keeps the attention on the sentence instead of the furniture around it.
+
+The same applies to the site. A static page with a readable measure, a few navigation links, and no pop-ups is not a limitation. It is a decision about what the reader is here to do.
+
+## Make the boring parts automatic
+
+Plain text only works if the boring parts are handled by the build: links are checked, frontmatter is validated, images are optimized, and the feed is generated. Automation protects the simplicity. Without it, “just files” becomes a pile of broken references.
+
+The goal is not to avoid tools. It is to choose tools that keep the writing portable and the reader’s experience fast. Markdown, a static build, and a CDN do that well.
+
+## Write for the archive
+
+A blog is a record. The post you publish today should still make sense when the framework has moved on and the design has changed. Plain text is the closest thing we have to a format that will still be here.

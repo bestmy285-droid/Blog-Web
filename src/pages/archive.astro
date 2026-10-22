@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPostsForDisplay, postUrl } from '../lib/posts';
+
+const posts = await getPostsForDisplay();
+const shortDate = new Intl.DateTimeFormat('en', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
+const groups = new Map<number, typeof posts>();
+
+for (const post of posts) {
+  const year = post.data.date.getUTCFullYear();
+  const group = groups.get(year) ?? [];
+  group.push(post);
+  groups.set(year, group);
+}
+
+const years = [...groups.keys()].sort((a, b) => b - a);
+---
+
+<BaseLayout
+  title="Archive"
+  description="Every published post on Blog Web, grouped by year."
+  canonicalPath="/archive/"
+>
+  <section class="page-header wrap">
+    <h1>Archive</h1>
+    <p>Every published post, newest first, grouped by year.</p>
+  </section>
+
+  <section class="wrap archive">
+    {
+      posts.length > 0 ? (
+        years.map((year) => (
+          <section aria-labelledby={`year-${year}`}>
+            <h2 class="archive-year" id={`year-${year}`}>
+              {year}
+            </h2>
+            <ul class="archive-list">
+              {groups.get(year)?.map((post) => (
+                <li>
+                  <time datetime={post.data.date.toISOString()}>{shortDate.format(post.data.date)}</time>
+                  <a href={postUrl(post)}>{post.data.title}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      ) : (
+        <div class="empty-state">
+          <p>No published posts yet.</p>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

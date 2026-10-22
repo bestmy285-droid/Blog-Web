@@ -1,0 +1,35 @@
+---
+title: "Accessible focus states"
+date: 2026-02-11
+summary: "Visible focus is not a nice-to-have. It is how keyboard users know where they are."
+tags: ["accessibility", "css"]
+---
+
+Every interactive element needs a visible focus state. If a user presses Tab and cannot tell where focus went, the interface is broken for them.
+
+## Do not remove the outline
+
+The browser's default focus ring is not beautiful, but it is functional. Removing it without a replacement is one of the most common accessibility regressions.
+
+```css
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+```
+
+Use `:focus-visible` so pointer clicks do not always show a ring, while keyboard navigation does.
+
+## Check contrast against the background
+
+A focus ring that disappears into a card or a dark header is not visible. Test focus on every surface: the page, a post card, a tag, a button, and the search input.
+
+## Do not rely on color alone
+
+Color is useful, but it should not be the only signal. A border, a thicker outline, or a background change can make focus clearer.
+
+## Test with the keyboard
+
+Tab through the page from the address bar to the footer. Check the skip link, the navigation, the theme toggle, every link in the post, and the share buttons. If you lose your place, fix it before shipping.
+
+Visible focus is a small detail that decides whether the site is usable without a mouse.

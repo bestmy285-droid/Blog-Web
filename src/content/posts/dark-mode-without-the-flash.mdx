@@ -1,0 +1,76 @@
+---
+title: "Dark mode without the flash"
+date: 2026-08-12
+summary: "How to respect the system theme, remember an explicit choice, and avoid a bright flash on first paint."
+tags: ["css", "accessibility", "web-dev"]
+---
+
+A theme toggle looks like a small feature until the first reload. The page paints light for a moment, then snaps to dark. The fix is not a longer transition; it is resolving the theme before the first paint.
+
+## Resolve early, render once
+
+The theme has to be known while the document head is still parsing. Read the saved choice, fall back to the system preference, and set a class on the root element immediately.
+
+```html
+<script>
+  (() => {
+    const stored = localStorage.getItem("theme");
+    const dark = stored
+      ? stored === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+
+    document.documentElement.classList.toggle("dark", dark);
+  })();
+</script>
+```
+
+The script is tiny and runs before the body is painted. There is no flash because there is no second state to flash from.
+
+## Use tokens, not scattered colors
+
+Every color decision should come from a small set of custom properties. The toggle changes one class, and the rest of the page follows.
+
+```css
+:root {
+  color-scheme: light;
+  --bg: #faf7f2;
+  --text: #211e1a;
+  --accent: #a94f2a;
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg: #12110f;
+  --text: #f1ece5;
+  --accent: #e8926b;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+```
+
+`color-scheme` is doing useful work here. It tells the browser to render form controls, scrollbars, and the canvas with the right palette instead of forcing custom styles on every native element.
+
+## Respect the system until the reader decides
+
+The system preference is the default, not a one-time seed. Listen for changes, but only apply them when the reader has not made an explicit choice.
+
+```ts
+const media = matchMedia("(prefers-color-scheme: dark)");
+
+media.addEventListener("change", (event) => {
+  if (!localStorage.getItem("theme")) {
+    applyTheme(event.matches ? "dark" : "light");
+  }
+});
+```
+
+Once the reader clicks the toggle, store the choice and stop following the system. Both behaviors are expected: a site that ignores the system feels stubborn, and a site that overrides an explicit choice feels broken.
+
+## Check contrast in both themes
+
+Dark mode is not an inverted stylesheet. Muted text that passes contrast on cream can disappear on near-black. Borders need to stay visible without becoming bright lines. The accent color usually needs a lighter variant.
+
+Test the actual reading surfaces — body text, links, tags, code blocks, focus rings, and disabled controls — in both themes. A theme toggle is finished when nothing looks like an afterthought.

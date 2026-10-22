@@ -1,0 +1,40 @@
+---
+title: "Small CSS wins"
+date: 2026-05-30
+summary: "A handful of small CSS choices that make a reading layout feel calmer and more robust."
+tags: ["css", "ux"]
+---
+
+Most of the CSS that matters on a blog is not clever. It is a set of small decisions that keep the page readable when the content, viewport, or font changes.
+
+## Set a measure, not a width
+
+A paragraph should be wide enough to avoid choppy lines and narrow enough to keep the eye from losing its place. `max-width: 68ch` does that without tying the layout to a specific device.
+
+```css
+.prose {
+  max-width: 68ch;
+}
+```
+
+## Reserve space for media
+
+Images without dimensions cause layout shift. Give them an aspect ratio or explicit width and height so the browser can reserve the box before the file arrives.
+
+```css
+.post-cover img {
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+}
+```
+
+## Let long words wrap
+
+URLs, code identifiers, and German nouns can break a narrow layout. `overflow-wrap: anywhere` is a small safeguard that prevents horizontal scrolling.
+
+## Prefer system fonts
+
+A system font stack avoids a network request, a flash of invisible text, and a licensing decision. On a reading site, the performance win is worth more than a custom typeface.
+
+These choices are not impressive on their own. Together they make the page feel considered, which is the point.

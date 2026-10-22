@@ -1,0 +1,30 @@
+---
+title: "A smaller search index"
+date: 2026-01-20
+summary: "Full-text search is useful, but the index should not grow faster than the archive."
+tags: ["astro", "performance"]
+---
+
+A client-side search index is a simple way to give a static site full-text search. It is also easy to make it too large.
+
+## Index the useful text
+
+The body of every post is the obvious source, but not every part is equally useful. Code blocks, imports, and repeated navigation labels add weight without improving results.
+
+A small cleanup at build time makes the index smaller and the results cleaner:
+
+```ts
+const body = stripMarkdown(post.body ?? '');
+```
+
+## Cap the archive
+
+If the blog has hundreds of posts, indexing every word is wasteful. Index titles, summaries, tags, and a bounded excerpt from the body. Readers who need more can open the post.
+
+## Load it only where it is needed
+
+The index should not be part of the initial page load. Fetch it on the search page, cache it, and show recent posts while it arrives. The home page and post pages stay small.
+
+## Measure the payload
+
+Treat the index like any other asset. Check its compressed size, set a budget, and revisit it as the archive grows. Search is a feature, not an excuse to ship a megabyte of JSON.

@@ -1,0 +1,53 @@
+---
+title: "A table of contents that earns its place"
+date: 2026-07-21
+summary: "When a table of contents helps, how to generate one from real headings, and how to keep it honest while scrolling."
+tags: ["astro", "ux", "accessibility"]
+---
+
+A table of contents is a navigation aid, not decoration. It helps when a post is long enough that a reader might want to jump to a section, and it gets in the way when every two-paragraph note has a sidebar.
+
+My rule is simple: show it when a post has at least two H2 or H3 headings. Below that, the reader can scroll.
+
+## Generate from the rendered document
+
+Do not maintain a second list by hand. The headings already exist in the content, and the renderer knows their IDs.
+
+```ts
+const { Content, headings } = await render(post);
+const toc = headings.filter((heading) => heading.depth <= 3);
+```
+
+The IDs matter. If a heading changes, the anchor changes with it. A hand-written table of contents drifts immediately.
+
+## Make the anchors stable
+
+A heading anchor should survive an edit to the surrounding prose. Derive it from the heading text, then handle duplicates with a numeric suffix. If two sections are called “Setup”, the second one becomes `setup-1` instead of silently stealing the first link.
+
+Stable anchors also make it possible to link to a section from another post, an issue, or a chat message. That is the real value of a table of contents: it gives readers a way to point at a specific idea.
+
+## Highlight the current section
+
+The active state should follow the section the reader is actually looking at. An `IntersectionObserver` with a narrow band near the top of the viewport works better than a scroll handler that recalculates every position.
+
+```ts
+const observer = new IntersectionObserver(
+  (entries) => {
+    const visible = entries.find((entry) => entry.isIntersecting);
+    if (visible) setActive(visible.target.id);
+  },
+  { rootMargin: "-10% 0px -75% 0px" },
+);
+```
+
+The highlight is a small affordance, but it answers a useful question: “Where am I?” without making the reader look away from the text.
+
+## Do not hide it on small screens
+
+On a phone, a fixed sidebar is impossible. The table of contents can move above the article, collapse into a details element, or sit below the title. What it should not do is disappear entirely. A long post on a small screen is exactly where a jump list helps most.
+
+The version on this site moves above the content at narrow widths. It is still visible, still keyboard accessible, and still built from the same headings as the desktop version.
+
+## Keep it proportional
+
+A table of contents should not become a second article. Limit it to H2 and H3, use compact type, and let the active state do the work. The reader came for the post, not the outline.

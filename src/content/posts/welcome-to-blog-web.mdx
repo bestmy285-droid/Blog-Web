@@ -1,0 +1,52 @@
+---
+title: "Welcome to Blog Web"
+date: 2026-09-28
+summary: "Why this site exists, what I plan to write about, and how the blog is built."
+tags: ["meta", "writing"]
+cover: ../../assets/cover-default.png
+coverAlt: "Dark gradient banner with the words Blog Web and a short tagline"
+---
+
+This is the first post on Blog Web: a small, fast, personal site for writing about the web.
+
+I have spent years collecting notes in private files, half-finished drafts, and chat threads. Most of those notes never helped anyone else. This site is an attempt to change that. Publishing forces clarity, and a public URL is a better home for an idea than a folder nobody opens.
+
+## Why another blog?
+
+The short answer: ownership. I want the writing to live as plain text in a repository, the design to stay out of the way of the words, and the pages to load quickly on a phone. I do not need a dashboard, a comment section, or a pop-up asking you to subscribe.
+
+The longer answer is that writing is how I think. A post is a chance to take a messy pile of observations, test them against a real example, and leave behind something more useful than a bookmarked tab.
+
+## What you will find here
+
+I plan to write about the parts of building for the web that are easy to underestimate:
+
+- TypeScript patterns that make large codebases easier to change.
+- CSS and accessibility details that decide whether an interface feels solid.
+- Performance work measured on real devices, not just a desktop browser.
+- The craft of writing, editing, and maintaining documentation.
+
+Some posts will be short notes. Others will be longer walkthroughs with code. I would rather publish a useful paragraph than wait for a perfect essay.
+
+## How it is built
+
+The site is a static build. Content lives in Markdown and MDX files, and every page is generated ahead of time. There is no database and no server runtime. That keeps the failure modes small and the reading experience fast.
+
+```ts
+type Post = {
+  title: string;
+  date: Date;
+  summary: string;
+  tags: string[];
+};
+
+const readingTime = (words: number) => Math.max(1, Math.round(words / 200));
+```
+
+The build also checks the boring things: missing frontmatter, duplicate slugs, broken internal links, and images without alt text. If a post is broken, the deploy should fail before a reader sees it.
+
+## What is next
+
+The next few posts will cover the decisions behind this site: the performance budget, the dark-mode implementation, and the search index. After that, I will return to the topics I keep coming back to: type safety, layout, and the small details that make software feel considered.
+
+Thanks for reading. If something here is useful, the RSS feed is the best way to follow along.

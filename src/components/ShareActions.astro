@@ -1,0 +1,72 @@
+---
+interface Props {
+  url: string;
+  title: string;
+}
+
+const { url, title } = Astro.props;
+---
+
+<div class="share-actions" data-share-url={url} data-share-title={title}>
+  <button type="button" class="button button-secondary" data-copy-link>
+    Copy link
+  </button>
+  <button type="button" class="button button-secondary" data-native-share>
+    Share
+  </button>
+  <span class="share-status" role="status" aria-live="polite"></span>
+</div>
+
+<script>
+  const container = document.querySelector<HTMLElement>('.share-actions');
+
+  if (container) {
+    const url = container.dataset.shareUrl ?? window.location.href;
+    const title = container.dataset.shareTitle ?? document.title;
+    const copyButton = container.querySelector<HTMLButtonElement>('[data-copy-link]');
+    const shareButton = container.querySelector<HTMLButtonElement>('[data-native-share]');
+    const status = container.querySelector<HTMLElement>('.share-status');
+
+    const announce = (message: string) => {
+      if (status) {
+        status.textContent = message;
+        window.setTimeout(() => {
+          status.textContent = '';
+        }, 3000);
+      }
+    };
+
+    const copy = async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        announce('Link copied.');
+      } catch {
+        const field = document.createElement('textarea');
+        field.value = url;
+        field.setAttribute('readonly', '');
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        document.execCommand('copy');
+        field.remove();
+        announce('Link copied.');
+      }
+    };
+
+    copyButton?.addEventListener('click', copy);
+
+    shareButton?.addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+        } catch {
+          // The user cancelled the share sheet; nothing to report.
+        }
+        return;
+      }
+
+      await copy();
+    });
+  }
+</script>

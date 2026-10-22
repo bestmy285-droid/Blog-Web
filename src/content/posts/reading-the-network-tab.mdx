@@ -1,0 +1,31 @@
+---
+title: "Reading the network tab"
+date: 2026-05-18
+summary: "A short checklist for finding the requests that actually slow down a page."
+tags: ["performance", "web-dev"]
+---
+
+The network tab is still the fastest way to understand why a page feels slow. Start with the requests that block rendering, then work down.
+
+## Sort by size, then by start time
+
+The biggest file is not always the problem. A small script that blocks the parser can hurt more than a large image that loads after the content is readable.
+
+Look for:
+
+- Render-blocking CSS and JavaScript in the document head.
+- Fonts that hide text until they arrive.
+- Images without dimensions that push content around.
+- Third-party requests that arrive before the reader needs them.
+
+## Check what is cached
+
+A second visit should not download the same assets. If it does, the cache headers are wrong or the file names change on every build. Hashed asset names plus a long cache lifetime are the usual fix.
+
+## Measure on a slow connection
+
+A fast office network hides problems. Throttle to a mid-range phone profile, disable the cache, and reload. The difference between a local demo and a real reading experience is usually in the first second.
+
+## Remove before optimizing
+
+The best request is the one that never happens. Delete the unused script, inline the tiny stylesheet, and replace the carousel with a static image. Optimization is easier after subtraction.

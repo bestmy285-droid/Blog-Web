@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import Pagination from '../components/Pagination.astro';
+import { SITE_DESCRIPTION, SITE_TAGLINE, SITE_TITLE, SITE_URL } from '../consts';
+import { getPostsForDisplay } from '../lib/posts';
+
+const posts = await getPostsForDisplay();
+const pageSize = 10;
+const totalPages = Math.max(1, Math.ceil(posts.length / pageSize));
+const pagePosts = posts.slice(0, pageSize);
+const siteUrl = Astro.site ?? new URL(SITE_URL);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  url: new URL('/', siteUrl).href,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${new URL('/search/', siteUrl).href}?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
+};
+---
+
+<BaseLayout
+  title={SITE_TITLE}
+  description={SITE_DESCRIPTION}
+  canonicalPath="/"
+  jsonLd={jsonLd}
+>
+  <section class="hero wrap">
+    <h1>{SITE_TITLE}</h1>
+    <p>{SITE_TAGLINE}</p>
+    <div class="hero-meta">
+      <span>{posts.length} {posts.length === 1 ? 'post' : 'posts'}</span>
+      <a href="/archive/">Browse the archive</a>
+      <a href="/rss.xml">Subscribe via RSS</a>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="latest-posts">
+    <div class="section-heading">
+      <h2 id="latest-posts">Latest posts</h2>
+      <span>Newest first</span>
+    </div>
+
+    {
+      pagePosts.length > 0 ? (
+        <div class="post-list">
+          {pagePosts.map((post) => <PostCard post={post} />)}
+        </div>
+      ) : (
+        <div class="empty-state">
+          <p>No posts are published yet.</p>
+          <p>
+            Start with the <a href="/about/">About page</a>, or add a Markdown file to{' '}
+            <code>src/content/posts/</code>.
+          </p>
+        </div>
+      )
+    }
+
+    {totalPages > 1 && <Pagination page={1} totalPages={totalPages} />}
+  </section>
+</BaseLayout>

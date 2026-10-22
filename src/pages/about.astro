@@ -1,0 +1,39 @@
+---
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const entry = await getEntry('pages', 'about');
+
+if (!entry) {
+  throw new Error('Missing About content: src/content/pages/about.mdx');
+}
+
+const { Content } = await render(entry);
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  canonicalPath="/about/"
+>
+  <section class="page-header wrap">
+    <h1>{entry.data.title}</h1>
+  </section>
+
+  <section class="wrap">
+    <div class="about-intro">
+      <img
+        class="about-avatar"
+        src="/avatar.svg"
+        alt="Illustrated portrait placeholder for the blog author"
+        width="120"
+        height="120"
+      />
+      <p>{entry.data.description}</p>
+    </div>
+
+    <div class="prose">
+      <Content />
+    </div>
+  </section>
+</BaseLayout>

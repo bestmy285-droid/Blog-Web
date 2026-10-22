@@ -1,0 +1,23 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { headings } = Astro.props;
+const minDepth = Math.min(...headings.map((heading) => heading.depth));
+---
+
+<nav class="toc" aria-labelledby="toc-heading">
+  <h2 id="toc-heading" class="toc-title">On this page</h2>
+  <ol class="toc-list">
+    {
+      headings.map((heading) => (
+        <li class={`toc-item toc-depth-${heading.depth - minDepth}`}>
+          <a href={`#${heading.slug}`} data-toc-link={heading.slug}>
+            {heading.text}
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</nav>

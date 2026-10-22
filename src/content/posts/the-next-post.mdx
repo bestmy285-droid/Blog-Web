@@ -1,0 +1,16 @@
+---
+title: "The next post"
+date: 2026-10-30
+summary: "A draft that should appear in local development but never in the production build."
+tags: ["meta"]
+draft: true
+---
+
+This is a draft post used to verify the publishing workflow. It should render in local development with a visible Draft badge, and it should be excluded from the production site, search index, RSS feed, sitemap, tag counts, and related posts.
+
+## What to check
+
+- The post appears at `/posts/the-next-post/` while running `npm run dev`.
+- The Draft badge is visible.
+- A production build does not include this page.
+- The tag `meta` still appears because other published posts use it.
