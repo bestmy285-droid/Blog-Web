@@ -707,7 +707,7 @@ test('TC-033 — Core Web Vitals meet the local targets', async ({ page }) => {
       for (const entry of list.getEntries()) {
         (window as unknown as { __events: number[] }).__events.push(entry.duration);
       }
-    }).observe({ type: 'event', buffered: true, durationThreshold: 16 });
+    }).observe({ type: 'event', buffered: true, durationThreshold: 16 } as unknown as PerformanceObserverInit);
   });
 
   await page.goto(postUrl(POSTS.welcome));
