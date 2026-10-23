@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import type { Post } from '../lib/posts';
 import { formatDate, getReadingTime, postUrl } from '../lib/posts';
 import { getTagList, tagUrl } from '../lib/tags';
@@ -9,34 +10,56 @@ interface Props {
 
 const { post } = Astro.props;
 const tags = getTagList(post.data.tags);
+const cardImage = post.data.cardImage;
 ---
 
-<article class:list={['post-card', { 'is-draft': post.data.draft }]}>
-  <div class="post-card-top">
-    <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
-    {post.data.draft && <span class="draft-badge">Draft</span>}
+<article
+  class:list={[
+    'post-card',
+    { 'is-draft': post.data.draft, 'has-card-image': Boolean(cardImage) },
+  ]}
+>
+  <div class="post-card-content">
+    <div class="post-card-top">
+      <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+      {post.data.draft && <span class="draft-badge">Draft</span>}
+    </div>
+
+    <h2 class="post-card-title">
+      <a href={postUrl(post)}>{post.data.title}</a>
+    </h2>
+
+    <p class="post-card-summary">{post.data.summary}</p>
+
+    <div class="post-card-footer">
+      <span class="reading-time">{getReadingTime(post)} min read</span>
+      {
+        tags.length > 0 && (
+          <ul class="tag-list" aria-label="Tags">
+            {tags.map((tag) => (
+              <li>
+                <a class="tag" href={tagUrl(tag)}>
+                  {tag}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
   </div>
 
-  <h2 class="post-card-title">
-    <a href={postUrl(post)}>{post.data.title}</a>
-  </h2>
-
-  <p class="post-card-summary">{post.data.summary}</p>
-
-  <div class="post-card-footer">
-    <span class="reading-time">{getReadingTime(post)} min read</span>
-    {
-      tags.length > 0 && (
-        <ul class="tag-list" aria-label="Tags">
-          {tags.map((tag) => (
-            <li>
-              <a class="tag" href={tagUrl(tag)}>
-                {tag}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )
-    }
-  </div>
+  {
+    cardImage && (
+      <figure class="post-card-media">
+        <Image
+          src={cardImage}
+          alt={post.data.cardImageAlt ?? ''}
+          widths={[280, 420, 600]}
+          sizes="(max-width: 720px) 100vw, 300px"
+          loading="lazy"
+        />
+      </figure>
+    )
+  }
 </article>

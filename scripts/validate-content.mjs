@@ -110,6 +110,24 @@ for (const file of files) {
     }
   }
 
+  if (data.cardImage !== undefined) {
+    if (typeof data.cardImage !== 'string' || data.cardImage.length === 0) {
+      report(file, '"cardImage" must be a local image path');
+    } else {
+      const cardImagePath = data.cardImage.startsWith('/')
+        ? join(publicDir, data.cardImage.slice(1))
+        : resolve(dirname(file), data.cardImage);
+
+      if (!existsSync(cardImagePath)) {
+        report(file, `card image not found: ${data.cardImage}`);
+      }
+
+      if (typeof data.cardImageAlt !== 'string' || data.cardImageAlt.trim().length === 0) {
+        report(file, '"cardImageAlt" is required when "cardImage" is set');
+      }
+    }
+  }
+
   const slug = typeof data.slug === 'string' && data.slug.length > 0
     ? data.slug
     : basename(file, extname(file));

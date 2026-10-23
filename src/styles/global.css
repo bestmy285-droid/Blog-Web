@@ -386,6 +386,36 @@ html.dark .theme-toggle .icon-moon {
   transform: translateY(-2px);
 }
 
+.post-card.has-card-image {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 300px);
+  gap: clamp(1.25rem, 3vw, 2rem);
+  align-items: center;
+}
+
+.post-card-content {
+  min-width: 0;
+}
+
+.post-card-media {
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 5 / 3;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--accent-soft);
+}
+
+.post-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 5 / 3;
+  object-fit: cover;
+  object-position: center;
+}
+
 .post-card.is-draft {
   border-style: dashed;
 }
@@ -1209,6 +1239,14 @@ html.dark .astro-code span {
   .post-card-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .post-card.has-card-image {
+    grid-template-columns: 1fr;
+  }
+
+  .post-card-media {
+    order: -1;
   }
 
   .pagination {

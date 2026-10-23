@@ -14,12 +14,18 @@ const posts = defineCollection({
         updated: z.coerce.date().optional(),
         cover: image().optional(),
         coverAlt: z.string().min(1).max(200).optional(),
+        cardImage: image().optional(),
+        cardImageAlt: z.string().min(1).max(200).optional(),
         draft: z.boolean().default(false),
         slug: z.string().min(1).optional(),
       })
       .refine((data) => !data.cover || Boolean(data.coverAlt), {
         message: 'coverAlt is required when cover is set',
         path: ['coverAlt'],
+      })
+      .refine((data) => !data.cardImage || Boolean(data.cardImageAlt), {
+        message: 'cardImageAlt is required when cardImage is set',
+        path: ['cardImageAlt'],
       }),
 });
 
